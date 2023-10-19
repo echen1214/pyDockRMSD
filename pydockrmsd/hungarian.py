@@ -2,6 +2,26 @@ from math import sqrt
 from munkres import Munkres, DISALLOWED
 from typing import List, Tuple
 
+def readPDB(fname: str) -> Tuple[List[float],
+                                  List[str]]:
+    coords = []
+    atoms = []
+    with open(fname) as file:
+        n = 0
+        readflag = False
+        for line in file:
+            if line[:6] == "CONECT":
+                break
+            elif (line[:6] == "HETATM") or (line[:6] == "ATOM  "):
+                readflag = True
+                n += 1
+                if line[76:78].strip() == "H":
+                    continue
+                coords.append([float(line[30:38]), float(line[38:46]), float(line[46:54])])
+                atoms.append(line[76:78].strip())
+            else:
+                continue
+    return(coords, atoms)
 
 def readMol2(fname: str) -> Tuple[List[float],
                                   List[str]]:
@@ -28,12 +48,19 @@ def readMol2(fname: str) -> Tuple[List[float],
     return (coords, atoms)
 
 
-def hungarian(first_mol_path: str,
-              second_mol_path: str):
-    query = readMol2(first_mol_path)
+def hungarian(first_path: str,
+              second_path: str):
+    if first_path.split('.')[-1] == "mol2":
+        query = readMol2(first_path)
+    elif first_path.split('.')[-1] == "pdb":
+        query = readPDB(first_path)
+
+    if second_path.split('.')[-1] == "mol2":
+        temp = readMol2(second_path)
+    elif second_path.split('.')[-1] == "pdb":
+        temp = readPDB(second_path)
     querycoords: List[float] = query[0]
     queryatoms: List[str] = query[1]
-    temp = readMol2(second_mol_path)
     tempcoords: List[float] = temp[0]
     tempatoms: List[str] = temp[1]
     if len(querycoords) != len(tempcoords):
